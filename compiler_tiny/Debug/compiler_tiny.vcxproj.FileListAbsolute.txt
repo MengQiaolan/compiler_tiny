@@ -1,0 +1,2 @@
+D:\postgraduate_1\compiler\compiler_tiny\Debug\compiler_tiny.exe
+D:\postgraduate_1\compiler\compiler_tiny\Debug\compiler_tiny.pdb
