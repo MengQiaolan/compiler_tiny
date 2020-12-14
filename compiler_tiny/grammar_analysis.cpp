@@ -5,6 +5,7 @@
 #include<utility>
 #include"word_analysis.h"
 #include"symbol.h"
+#include<fstream>
 
 #define EXPR 1
 
@@ -28,6 +29,7 @@ int index = 0;
 // 当前作用域
 vector<string> SCOPE = { "global" };
 string atObject;
+ofstream midCodeFile;
 
 int lableNo = 0;
 int tempVarNo = 0;
@@ -52,10 +54,10 @@ void _ASSIGN_();
 void _CALL_();
 void _CONDITION_();
 void _EXPRESS_();
-void _FACTOR_();
-void _TINY_FACTOR_();
-void _DOUBLE_TINY_FACTOR_();
 void _TERM_();
+void _TINY_TERM_();
+void _DOUBLE_TINY_TERM_();
+void _FACTOR_();
 void _PRINT_MIDCODE_(const int& param1,
 	const int& param2,
 	const int& param3,
@@ -219,7 +221,11 @@ string getString(int i) {
 }
 
 void _PROGRAM_() {
-
+	midCodeFile.open("midcode.txt");
+	if (!midCodeFile.is_open()) {
+		cout << "无法创建输出文件！" << endl;
+		exit(0);
+	}
 	if (getType(index) == OBJECTSY) {
 		_OBJECT_();
 	}
@@ -235,6 +241,7 @@ void _PROGRAM_() {
 	if (getType(index) == FUNCTIONSY && getType(index + 1) == MAINSY) {
 		_FUNCTION_();
 	}
+	midCodeFile.close();
 	/*while (index < allSymbol.size()) {
 		if (getType(index) == CONSTSY) {
 
@@ -623,48 +630,48 @@ void _EXPRESS_() {
 		}
 		++index;
 	}
-	_FACTOR_();
+	_TERM_();
 	while (getType(index) == PLUSSY || getType(index) == MINUSSY) {
 		if (getType(index) == MINUSSY) sta.pushOperator("-", MINUS);
 		else sta.pushOperator("+", PLUS);
 		++index;
-		_FACTOR_();
+		_TERM_();
 	}
 }
 
 // ＜项＞ ::= ＜次级项＞{＜乘除运算符＞＜次级项＞}
-void _FACTOR_() {
-	_TINY_FACTOR_();
+void _TERM_() {
+	_TINY_TERM_();
 	while (getType(index) == TIMESSY || getType(index) == DIVSY) {
 		if (getType(index) == TIMESSY) sta.pushOperator("*", TIMES);
 		else sta.pushOperator("/", DIV);
 		++index;
-		_TINY_FACTOR_();
+		_TINY_TERM_();
 	}
 }
 
 // <次级项> :: = <次次级项>{ <与或><次次级项> }
-void _TINY_FACTOR_() {
-	_DOUBLE_TINY_FACTOR_();
+void _TINY_TERM_() {
+	_DOUBLE_TINY_TERM_();
 	while (getType(index) == ANDSY || getType(index) == ORSY) {
 		if (getType(index) == ANDSY) sta.pushOperator("&", AND);
 		else sta.pushOperator("|", OR);
 		++index;
-		_DOUBLE_TINY_FACTOR_();
+		_DOUBLE_TINY_TERM_();
 	}
 }
 
 // <次次级项> :: = [ <非> ]<因子>
-void _DOUBLE_TINY_FACTOR_() {
+void _DOUBLE_TINY_TERM_() {
 	if (getType(index) == NOTSY) {
 		++index;
 		sta.pushOperand("null");
 		sta.pushOperator("~", NOT);
 	}
-	_TERM_();
+	_FACTOR_();
 }
 
-void _TERM_() {
+void _FACTOR_() {
 	// ＜标识符＞‘[’＜表达式＞‘]’
 	if (getType(index + 1) == LBRASY) {
 		sta.pushOperand(getString(index));
@@ -721,65 +728,117 @@ void _PRINT_MIDCODE_(
 ) {
 	if (param1 == CONSTSY) {
 		cout << "const " << param4 << " " << param2 << endl;
+		midCodeFile << "const " << param4 << " " << param2 << endl;
 	}
 	else if (param1 == VARSY) {
-		if (atObject != "") cout << "object " << atObject << " " << param4 << endl;
-		else if (param2 == 0) cout << "var " << param4 << endl;
+		if (atObject != "") {
+			cout << "object " << atObject << " " << param4 << endl;
+			midCodeFile << "object " << atObject << " " << param4 << endl;
+		}
+		else if (param2 == 0) {
+			cout << "var " << param4 << endl;
+			midCodeFile << "var " << param4 << endl;
+		}
 		// 参数
-		else if (param2 == 1) cout << "para var " << param4 << endl;
-		else cout << "array " << param4 << " " << param2 << endl;
+		else if (param2 == 1) {
+			cout << "para var " << param4 << endl;
+			midCodeFile << "para var " << param4 << endl;
+		}
+		else {
+			cout << "array " << param4 << " " << param2 << endl;
+			midCodeFile << "array " << param4 << " " << param2 << endl;
+		}
 	}
 	else if (param1 == OBJECTSY) {
 		cout << "object " << param4 << endl;
+		midCodeFile << "object " << param4 << endl;
 	}
 	else if (param1 == FUNCTIONSY) {
-		if (param2 == 0) cout << "function " << param4 << endl;
-		else if (param2 == 1) cout << "RET 0" << endl;
-		else if (param2 == 2) cout << "RET " << param4 << endl;
-		else if (param2 == 3) cout << "para " << param4 << endl;
-		else if (param2 == 4) cout << "call " << param4 << endl;
-		else if (param2 == 5) cout << param4 << " = RET" << endl;
+		if (param2 == 0) {
+			cout << "function " << param4 << endl;
+			midCodeFile << "function " << param4 << endl;
+		}
+		else if (param2 == 1) {
+			cout << "RET 0" << endl;
+			midCodeFile << "RET 0" << endl;
+		}
+		else if (param2 == 2) {
+			cout << "RET " << param4 << endl;
+			midCodeFile << "RET " << param4 << endl;
+		}
+		else if (param2 == 3) {
+			cout << "para " << param4 << endl;
+			midCodeFile << "para " << param4 << endl;
+		}
+		else if (param2 == 4) {
+			cout << "call " << param4 << endl;
+			midCodeFile << "call " << param4 << endl;
+		}
+		else if (param2 == 5) {
+			cout << param4 << " = RET" << endl;
+			midCodeFile << param4 << " = RET" << endl;
+		}
 	}
 	else if (param1 == INPUTSY) {
 		cout << "input " << param4 << endl;
+		midCodeFile << "input " << param4 << endl;
 	}
 	else if (param1 == OUTPUTSY) {
 		cout << "output " << param4 << endl;
+		midCodeFile << "output " << param4 << endl;
 	}
 	else if (param1 == ASSIGNSY) {
 		if (param2 == 1) {
-			if (param6 == "[") cout << "@t" << ++tempVarNo << " = " << param4 << " [ " << param5 << " ]" << endl;
-			else if (param4 == "null") cout << "@t" << ++tempVarNo << " = " << param6 << " " << param5 << endl;
-			else cout << "@t" << ++tempVarNo << " = " << param4 << " " << param6 << " " << param5 << endl;
+			if (param6 == "[") {
+				cout << "@t" << ++tempVarNo << " = " << param4 << " [ " << param5 << " ]" << endl;
+				midCodeFile << "@t" << ++tempVarNo << " = " << param4 << " [ " << param5 << " ]" << endl;
+			}
+			else if (param4 == "null") {
+				cout << "@t" << ++tempVarNo << " = " << param6 << " " << param5 << endl;
+				midCodeFile << "@t" << ++tempVarNo << " = " << param6 << " " << param5 << endl;
+			}
+			else {
+				cout << "@t" << ++tempVarNo << " = " << param4 << " " << param6 << " " << param5 << endl;
+				midCodeFile << "@t" << ++tempVarNo << " = " << param4 << " " << param6 << " " << param5 << endl;
+			}
 		}
 		if (param2 == 2) {
 			cout << param4 << " = " << param5 << endl;
+			midCodeFile << param4 << " = " << param5 << endl;
 		}
 		if (param2 == 3) {
 			cout << param4 << "[ " << param5 << " ] = " << param6 << endl;
+			midCodeFile << param4 << "[ " << param5 << " ] = " << param6 << endl;
 		}
 		if (param2 == 4) {
 			cout << param4 << " . " << param5 << " = " << param6 << endl;
+			midCodeFile << param4 << " . " << param5 << " = " << param6 << endl;
 		}
 	}
 	else if (param1 == IFSY) {
 		if (param2 == 0) {
 			cout << "BZ label_" << param3 << endl;
+			midCodeFile << "BZ label_" << param3 << endl;
 		}
 		else if (param2 == 1) {
 			cout << param4 << " == 1" << endl;
+			midCodeFile << param4 << " == 1" << endl;
 		}
 		else if (param2 == 2) {
 			cout << param4 << " " << param5 << " " << param6 << endl;
+			midCodeFile << param4 << " " << param5 << " " << param6 << endl;
 		}
 		else if (param2 == 3) {
 			cout << "BZ label_" << param3 << endl;
+			midCodeFile << "BZ label_" << param3 << endl;
 		}
 		else if (param2 == 4) {
 			cout << "label_" << param3 << ":" << endl;
+			midCodeFile << "label_" << param3 << ":" << endl;
 		}
 		else if (param2 == 5) {
 			cout << "GOTO label_" << param3 << endl;
+			midCodeFile << "GOTO label_" << param3 << endl;
 		}
 		else;
 	}

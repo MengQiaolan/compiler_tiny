@@ -76,8 +76,8 @@ void init() {
 
 	indexOfLine = 0;
 	cout << "请输入源代码文件名：" << endl;
-	//cin >> filename;
-	filename = "code.txt";
+	cin >> filename;
+	// filename = "code.txt";
 	inFile.open(filename);
 	if (!inFile.is_open()) {
 		cout << "找不到输入文件！" << endl;

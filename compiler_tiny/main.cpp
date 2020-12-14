@@ -3,6 +3,8 @@
 #include"grammar_analysis.h"
 using namespace std;
 
+#define random(x) (rand()%x)
+
 int main() {
 	init();
 	while (getsym());
